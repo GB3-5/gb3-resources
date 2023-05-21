@@ -56,9 +56,17 @@ $(PROGRAM-SF).sr:$(PROGRAM-SF)
 
 install: all
 	mkdir -p $(GB3_ROOT)/processor/programs/
+
+	# New below
+	mkdir -p $(GB3_ROOT)/mod_processor/programs/
+
 	$(SREC2HEX) -b 4096 $(PROGRAM).sr
 	cp program.hex $(GB3_ROOT)/processor/programs/
 	cp data.hex $(GB3_ROOT)/processor/programs/
+	
+	# New below
+	cp program.hex $(GB3_ROOT)/mod_processor/programs/
+	cp data.hex $(GB3_ROOT)/mod_processor/programs/
 
 clean:
 	$(RM) init.i *.o $(PROGRAM) $(PROGRAM).sr $(PROGRAM).map
