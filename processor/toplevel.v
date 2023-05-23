@@ -41,15 +41,17 @@
  *	Top level entity, linking cpu with data and instruction memory.
  */
 
-module top (led);
+module top (dynamic_clk, led);
 	output [7:0]	led;
-
+	input wire dynamic_clk;
 	wire		clk_proc;
 	wire		data_clk_stall;
-	
+	wire        dynamic_clk;
 	wire		clk;
 	reg		ENCLKHF		= 1'b1;	// Plock enable
 	reg		CLKHF_POWERUP	= 1'b1;	// Power up the HFOSC circuit
+	reg 	ENCLKLF		= 1'b1;	// Plock enable
+	reg		CLKLF_POWERUP	= 1'b1; // Power up the LFOSC circuit
 
 
 	/*
@@ -83,7 +85,8 @@ module top (led);
 		.data_mem_WrData(data_WrData),
 		.data_mem_memwrite(data_memwrite),
 		.data_mem_memread(data_memread),
-		.data_mem_sign_mask(data_sign_mask)
+		.data_mem_sign_mask(data_sign_mask),
+		.mem_instruction_count(mem_instruction_count)
 	);
 
 	instruction_memory inst_mem( 
@@ -92,7 +95,7 @@ module top (led);
 	);
 
 	data_mem data_mem_inst(
-			.clk(clk),
+			.clk(dynamic_clk),
 			.addr(data_addr),
 			.write_data(data_WrData),
 			.memwrite(data_memwrite), 
@@ -103,5 +106,33 @@ module top (led);
 			.clk_stall(data_clk_stall)
 		);
 
-	assign clk_proc = (data_clk_stall) ? 1'b1 : clk;
+	DynamicClock dynamic_clock_inst (
+		.clk(clk),
+		.mem_instruction_count(mem_instruction_count),
+		.dynamic_clk(dynamic_clk)
+	);
+
+assign clk_proc = (data_clk_stall) ? 1'b1 : dynamic_clk;
+
+endmodule
+
+module DynamicClock (
+					input clk,
+					input [5:0] mem_instruction_count,
+					output reg dynamic_clk
+				);
+
+	always @(posedge clk) begin
+		if (mem_instruction_count >= 15)
+			dynamic_clk <= LFOSC;
+		else
+			dynamic_clk <= clk;
+	end
+
+	SB_LFOSC LFOSCInst (
+		.CLKLFEN(ENCLKLF),
+		.CLKLFPU(CLKLF_POWERUP),
+		.CLKLF(dynamic_clk)
+	);
+
 endmodule

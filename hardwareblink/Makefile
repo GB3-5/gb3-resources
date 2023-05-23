@@ -10,3 +10,5 @@ sail-nextpnr:
 
 clean:
 	rm -f *.json *.blif *.asc *.bin
+
+	
