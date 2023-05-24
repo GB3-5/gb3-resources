@@ -268,11 +268,10 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable, clk);
 	 */
 	
 	always @(ALUctl, A, B) begin
-		A_in <= A[15:0];
-		B_in <= B[15:0];
-		C_in <= A[31:16];
-		D_in <= B[31:16];
-		
+		A_in <= A[31:16];
+		B_in <= A[15:0];
+		C_in <= B[31:16];
+		D_in <= B[15:0];
 		case (ALUctl[3:0])
 			/*
 			 *	AND (the fields also match ANDI and LUI)
@@ -288,20 +287,13 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable, clk);
 			 *	ADD (the fields also match AUIPC, all loads, all stores, and ADDI)
 			 * 	Can be done with the DSP
 			 */
-			`kSAIL_MICROARCHITECTURE_ALUCTL_3to0_ADD:	begin
-				// Split the inputs into two halves
-				ALUOut <= add_dsp_out;
-				
-			end
+			`kSAIL_MICROARCHITECTURE_ALUCTL_3to0_ADD:	ALUOut = add_dsp_out;
 
 			/*
 			 *	SUBTRACT (the fields also matches all branches)
 			 *	Can be done with the DSP
 			 */
-			`kSAIL_MICROARCHITECTURE_ALUCTL_3to0_SUB:	begin
-				// Split the inputs into two halves
-				ALUOut <= sub_dsp_out;
-			end
+			`kSAIL_MICROARCHITECTURE_ALUCTL_3to0_SUB:	ALUOut = sub_dsp_out;
 
 			/*
 			 *	SLT (the fields also matches all the other SLT variants)
