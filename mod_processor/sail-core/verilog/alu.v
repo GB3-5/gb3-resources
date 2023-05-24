@@ -101,10 +101,10 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable, clk);
 	// reg [31:0] add_ACCUMCO = 1'b0;
 	// reg [31:0] add_SIGNEXTIN = 1'b0;
 	// reg [31:0] add_SIGNEXTOUT = 1'b0;
-	wire [15:0] A_in; 
-	wire [15:0] B_in;
-	wire [15:0] C_in;
-	wire [15:0] D_in;
+	reg [15:0] A_in; 
+	reg [15:0] B_in;
+	reg [15:0] C_in;
+	reg [15:0] D_in;
 	wire [31:0] add_dsp_out;
 	// Does using the hack below reduce logic cell usage?
 	reg zero_reg = 1'b0;
@@ -268,10 +268,11 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable, clk);
 	 */
 	
 	always @(ALUctl, A, B) begin
-		A_in = A[31:16];
-		B_in = A[15:0];
-		C_in = B[31:16];
-		D_in = B[15:0];
+		A_in <= A[15:0];
+		B_in <= B[15:0];
+		C_in <= A[31:16];
+		D_in <= B[31:16];
+		
 		case (ALUctl[3:0])
 			/*
 			 *	AND (the fields also match ANDI and LUI)
@@ -289,7 +290,7 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable, clk);
 			 */
 			`kSAIL_MICROARCHITECTURE_ALUCTL_3to0_ADD:	begin
 				// Split the inputs into two halves
-				ALUOut = add_dsp_out;
+				ALUOut <= add_dsp_out;
 				
 			end
 
@@ -299,7 +300,7 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable, clk);
 			 */
 			`kSAIL_MICROARCHITECTURE_ALUCTL_3to0_SUB:	begin
 				// Split the inputs into two halves
-				ALUOut = sub_dsp_out;
+				ALUOut <= sub_dsp_out;
 			end
 
 			/*
