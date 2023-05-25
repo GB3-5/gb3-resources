@@ -41,12 +41,12 @@
  *	Top level entity, linking cpu with data and instruction memory.
  */
 
-module top (led);
+module top (led, mem_instruction_count);
 	output [7:0]	led;
+	input [5:0] mem_instruction_count;
 
 	wire		clk_proc;
-	wire		data_clk_stall;
-	
+
 	wire		clk;
 	reg		ENCLKHF		= 1'b1;	// Plock enable
 	reg		CLKHF_POWERUP	= 1'b1;	// Power up the HFOSC circuit
@@ -92,7 +92,7 @@ module top (led);
 	);
 
 	data_mem data_mem_inst(
-			.clk(clk),
+			.clk(clk_pll),
 			.addr(data_addr),
 			.write_data(data_WrData),
 			.memwrite(data_memwrite), 
@@ -103,5 +103,32 @@ module top (led);
 			.clk_stall(data_clk_stall)
 		);
 
+  	PLL PLL_inst (
+    .ref_clk(clk),
+    .pll_out_core(clk_proc),
+    .pll_out_global(clk_pll)
+  );
+
+endmodule
+
+module PLL(
+	input wire clk,
+	output wire clk_proc,
+	input wire data_clk_stall,
+	output wire clk_pll
+	);
+
 	assign clk_proc = (data_clk_stall) ? 1'b1 : clk;
+
+	SB_PLL40_2F_CORE #(
+		.FEEDBACK_PATH("SIMPLE"),
+		.DIVR(4'b0000),		// DIVR = 0, reference clock divider (divide by 1)
+		.DIVQ(7'b0000000),	// DIVQ = 0, VCO clock divider (divide by 1)
+		.ENABLE_ICEGATE(1'b1)	// Enable ICEGATE, PLL is in low power mode
+	) PLL_inst (
+		.REFERENCECLK(clk),
+		.PLLOUTCORE(clk_proc),
+		.PLLOUTGLOBAL(clk_pll),
+	);
+
 endmodule

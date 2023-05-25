@@ -46,6 +46,7 @@ module cpu(
 			clk,
 			inst_mem_in,
 			inst_mem_out,
+			mem_instruction_count,
 			data_mem_out,
 			data_mem_addr,
 			data_mem_WrData,
@@ -53,10 +54,14 @@ module cpu(
 			data_mem_memread,
 			data_mem_sign_mask
 		);
+	
 	/*
 	 *	Input Clock
 	 */
 	input clk;
+
+	// Store the original clock value
+	reg clk_orig = clk;
 
 	/*
 	 *	instruction memory input
@@ -64,6 +69,39 @@ module cpu(
 	output [31:0]		inst_mem_in;
 	input [31:0]		inst_mem_out;
 
+	/*
+	 * Register array for storing history of past 32 instructions
+	 */ 
+	reg [6:0] instruction_history [31:0];
+	reg [5:0] instruction_history_index;
+	output reg [5:0] mem_instruction_count; // Counter for number of memory instructions in the past 32 instructions, output to top level
+
+	/*
+	* Add to instruction history and wrap around when full
+	*/
+	always @(posedge clk) begin
+		instruction_history[instruction_history_index] <= inst_mem_in;
+		instruction_history_index <= instruction_history_index + 1;
+		if (instruction_history_index == 31) begin
+			instruction_history_index <= 0;
+			mem_instruction_count <= 0;
+		end
+
+		/*
+		* If the previous 10 instructions all involve memory access according to RISC-V ISA, 
+		* then ramp down clock speed to reduce inactive clock cycles
+		*/
+
+		// Check if the previous instruction was a memory instruction and update the memory instruction counter
+		if (instruction_history[(instruction_index - 1) & 31][6:0] == 35 || // Load instruction (opcode: 0000011)
+			instruction_history[(instruction_index - 1) & 31][6:0] == 39 || // Store instruction (opcode: 0100011)
+			instruction_history[(instruction_index - 1) & 31][6:0] == 3 || // LUI instruction (opcode: 0110111)
+			instruction_history[(instruction_index - 1) & 31][6:0] == 19) // AUIPC instruction (opcode: 0010111)
+		begin
+			mem_instruction_count <= mem_instruction_count + 1;
+		end
+	end
+	
 	/*
 	 *	Data Memory
 	 */
