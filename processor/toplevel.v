@@ -45,12 +45,11 @@ module top (led, mem_instruction_count);
 	output [7:0]	led;
 	input [5:0] mem_instruction_count;
 
-	wire		clk_proc;
-
 	wire		clk;
+	wire 		clk_proc;
+	wire 		clk_pll;
 	reg		ENCLKHF		= 1'b1;	// Plock enable
 	reg		CLKHF_POWERUP	= 1'b1;	// Power up the HFOSC circuit
-
 
 	/*
 	 *	Use the iCE40's hard primitive for the clock source.
@@ -72,6 +71,7 @@ module top (led, mem_instruction_count);
 	wire		data_memwrite;
 	wire		data_memread;
 	wire[3:0]	data_sign_mask;
+	wire data_clk_stall;
 
 
 	cpu processor(
@@ -103,32 +103,29 @@ module top (led, mem_instruction_count);
 			.clk_stall(data_clk_stall)
 		);
 
+	assign clk_proc = (data_clk_stall) ? 1'b1 : clk_pll;
+
+
   	PLL PLL_inst (
-    .ref_clk(clk),
-    .pll_out_core(clk_proc),
-    .pll_out_global(clk_pll)
-  );
+    .clk(clk),
+	.clk_pll(clk_pll)
+	);
 
 endmodule
 
 module PLL(
 	input wire clk,
-	output wire clk_proc,
-	input wire data_clk_stall,
 	output wire clk_pll
 	);
 
-	assign clk_proc = (data_clk_stall) ? 1'b1 : clk;
-
-	SB_PLL40_2F_CORE #(
+	SB_PLL40_CORE #(
 		.FEEDBACK_PATH("SIMPLE"),
 		.DIVR(4'b0000),		// DIVR = 0, reference clock divider (divide by 1)
 		.DIVQ(7'b0000000),	// DIVQ = 0, VCO clock divider (divide by 1)
 		.ENABLE_ICEGATE(1'b1)	// Enable ICEGATE, PLL is in low power mode
 	) PLL_inst (
 		.REFERENCECLK(clk),
-		.PLLOUTCORE(clk_proc),
-		.PLLOUTGLOBAL(clk_pll),
+		.PLLOUTGLOBAL(clk_pll)
 	);
 
 endmodule
