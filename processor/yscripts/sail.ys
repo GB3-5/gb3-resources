@@ -9,7 +9,9 @@ read_verilog verilog/adder.v verilog/cpu.v verilog/mux2to1.v verilog/alu_control
 
 # opt_rmdff -keepdc
 
-synth_ice40 -flatten -abc2 -blif sail.blif -retime -nocarry
+synth_ice40 -flatten -abc9 -blif sail.blif 
+# -retime
+
 
 write_json sail.json
 
