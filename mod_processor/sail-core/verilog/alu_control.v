@@ -53,6 +53,7 @@ module ALUControl(FuncCode, ALUCtl, Opcode);
 	input [3:0]		FuncCode;
 	input [6:0]		Opcode;
 	output reg [6:0]	ALUCtl;
+	input			clk;
 
 	/*
 	 *	The `initial` statement below uses Yosys's support for nonzero
@@ -79,7 +80,7 @@ module ALUControl(FuncCode, ALUCtl, Opcode);
 
 
 
-	always @(*) begin
+	always @(posedge(clk)) begin
 		case (Opcode)
 			/*
 			 *	LUI, U-Type

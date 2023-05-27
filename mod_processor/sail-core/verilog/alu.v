@@ -156,13 +156,13 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable, clk);
 		defparam add_dsp.TOPADDSUB_UPPERINPUT = 1'b1;
 
 		// Check this one also "defparam i_sbmac16.TOPADDSUB_CARRYSELECT = 2'b11;"
-		defparam add_dsp.TOPADDSUB_CARRYSELECT = 2'b11;
+		defparam add_dsp.TOPADDSUB_CARRYSELECT = 2'b10;
 
 		defparam add_dsp.BOTOUTPUT_SELECT = 2'b00; // accum regsiter output at O[15:0]
 		defparam add_dsp.BOTADDSUB_LOWERINPUT = 2'b00;
 		defparam add_dsp.BOTADDSUB_UPPERINPUT = 1'b1;
 		defparam add_dsp.BOTADDSUB_CARRYSELECT = 2'b00;
-		defparam add_dsp.MODE_8x8 = 1'b0;
+		defparam add_dsp.MODE_8x8 = 1'b1;
 		defparam add_dsp.A_SIGNED = 1'b1;
 		defparam add_dsp.B_SIGNED = 1'b1;
 
@@ -238,13 +238,13 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable, clk);
 		defparam sub_dsp.TOPADDSUB_UPPERINPUT = 1'b1;
 
 		// Check this one also "defparam i_sbmac16.TOPADDSUB_CARRYSELECT = 2'b11;"
-		defparam sub_dsp.TOPADDSUB_CARRYSELECT = 2'b00;
+		defparam sub_dsp.TOPADDSUB_CARRYSELECT = 2'b10;
 
 		defparam sub_dsp.BOTOUTPUT_SELECT = 2'b00; // accum regsiter output at O[15:0]
 		defparam sub_dsp.BOTADDSUB_LOWERINPUT = 2'b00;
 		defparam sub_dsp.BOTADDSUB_UPPERINPUT = 1'b1;
 		defparam sub_dsp.BOTADDSUB_CARRYSELECT = 2'b00;
-		defparam sub_dsp.MODE_8x8 = 1'b0;
+		defparam sub_dsp.MODE_8x8 = 1'b1;
 		defparam sub_dsp.A_SIGNED = 1'b1;
 		defparam sub_dsp.B_SIGNED = 1'b1;
 
@@ -267,11 +267,12 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable, clk);
 	 * 	When using the DSP, the same structure can be used, just with the DSP being invoked. 
 	 */
 	
-	always @(ALUctl, A, B) begin
+	always @(posedge(clk)) begin
 		A_in <= A[31:16];
 		B_in <= A[15:0];
 		C_in <= B[31:16];
 		D_in <= B[15:0];
+
 		case (ALUctl[3:0])
 			/*
 			 *	AND (the fields also match ANDI and LUI)
@@ -342,7 +343,7 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable, clk);
 		endcase
 	end
 
-	always @(ALUctl, ALUOut, A, B) begin
+	always @(posedge(clk)) begin
 		/*
 		 *	ALU used here to carry out mathematical operations to determine if a branch should be taken.
 		 */
