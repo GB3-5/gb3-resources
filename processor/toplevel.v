@@ -41,9 +41,11 @@
  *	Top level entity, linking cpu with data and instruction memory.
  */
 
-module top (led, mem_instruction_count);
+module top (led 
+//mem_instruction_count
+);
 	output [7:0]	led;
-	input [5:0] mem_instruction_count;
+	// input [5:0] mem_instruction_count;
 
 	wire		clk;
 	wire 		clk_proc;

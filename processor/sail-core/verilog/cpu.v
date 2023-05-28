@@ -74,7 +74,7 @@ module cpu(
 	 */ 
 	reg [6:0] instruction_history [31:0];
 	reg [5:0] instruction_history_index;
-	output reg [5:0] mem_instruction_count; // Counter for number of memory instructions in the past 32 instructions, output to top level
+	output [5:0] mem_instruction_count; // Counter for number of memory instructions in the past 32 instructions, output to top level
 
 	/*
 	* Add to instruction history and wrap around when full
