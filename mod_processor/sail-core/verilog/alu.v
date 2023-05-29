@@ -77,45 +77,28 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable, clk);
 	 * 	Configuration complete (not checked), port mapping incomplete (not checked)
 	 *  Use the DSP in unegistered mode for now, since the ALU is purely combinatorial
 	 */
-
-	// DSP for ADDITION	
-	// reg add_CE = 1'b1;
-	// reg add_IRSTTOP = 1'b0;
-	// reg add_IRSTBOT = 1'b0;
-	// reg add_ORSTTOP = 1'b0;
-	// reg add_ORSTBOT = 1'b0;
-	// reg add_AHOLD = 1'b0;
-	// reg add_BHOLD = 1'b0;
-	// reg add_CHOLD = 1'b0;
-	// reg add_DHOLD = 1'b0;
-	// reg add_OHOLDTOP = 1'b0;
-	// reg add_OHOLDBOT = 1'b0;
-	// reg add_OLOADTOP = 1'b0;
-	// reg add_OLOADBOT = 1'b0;
-	// reg add_ADDSUBTOP = 1'b0;
-	// reg add_ADDSUBBOT = 1'b0;
-	// reg add_ZERO = 1'b0;
+	
 	wire add_CO;
-	// reg add_CI = 1'b0;
-	// reg [31:0] add_ACCUMCI = 1'b0;
-	// reg [31:0] add_ACCUMCO = 1'b0;
-	// reg [31:0] add_SIGNEXTIN = 1'b0;
-	// reg [31:0] add_SIGNEXTOUT = 1'b0;
-	reg [15:0] A_in; 
-	reg [15:0] B_in;
-	reg [15:0] C_in;
-	reg [15:0] D_in;
+	wire sub_CO;
+
+	reg [15:0] A_in_lower; 
+	reg [15:0] B_in_lower;
+	reg [15:0] C_in_lower;
+	reg [15:0] D_in_lower;
+
 	wire [31:0] add_dsp_out;
-	// Does using the hack below reduce logic cell usage?
+	wire [31:0] sub_dsp_out;
+// 	Hack below reduces resource usage 
 	reg zero_reg = 1'b0;
 	reg one_reg = 1'b1;
 
+	// DSP for ADDITION
 	SB_MAC16 add_dsp
 		( 		// port interfaces
-		.A(A_in),
-		.B(B_in),
-		.C(C_in),
-		.D(D_in),
+		.A(A_in_lower),
+		.B(B_in_lower),
+		.C(C_in_lower),
+		.D(D_in_lower),
 		.O(add_dsp_out),
 		.CLK(clk),
 		.CE(one_reg),
@@ -151,13 +134,8 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable, clk);
 		defparam add_dsp.PIPELINE_16x16_MULT_REG2 = 1'b0;
 		defparam add_dsp.TOPOUTPUT_SELECT = 2'b00; // accum register output at O[31:16]
 		defparam add_dsp.TOPADDSUB_LOWERINPUT = 2'b00;
-
-		// Check this one "defparam i_sbmac16.TOPADDSUB_UPPERINPUT = 1'b1;"
 		defparam add_dsp.TOPADDSUB_UPPERINPUT = 1'b1;
-
-		// Check this one also "defparam i_sbmac16.TOPADDSUB_CARRYSELECT = 2'b11;"
 		defparam add_dsp.TOPADDSUB_CARRYSELECT = 2'b10;
-
 		defparam add_dsp.BOTOUTPUT_SELECT = 2'b00; // accum regsiter output at O[15:0]
 		defparam add_dsp.BOTADDSUB_LOWERINPUT = 2'b00;
 		defparam add_dsp.BOTADDSUB_UPPERINPUT = 1'b1;
@@ -166,38 +144,13 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable, clk);
 		defparam add_dsp.A_SIGNED = 1'b1;
 		defparam add_dsp.B_SIGNED = 1'b1;
 
-
 	// DSP for SUBTRACTION
-	// reg sub_CE = 1'b1;
-	// reg sub_IRSTTOP = 1'b0;
-	// reg sub_IRSTBOT = 1'b0;
-	// reg sub_ORSTTOP = 1'b0;
-	// reg sub_ORSTBOT = 1'b0;
-	// reg sub_AHOLD = 1'b0;
-	// reg sub_BHOLD = 1'b0;
-	// reg sub_CHOLD = 1'b0;
-	// reg sub_DHOLD = 1'b0;
-	// reg sub_OHOLDTOP = 1'b0;
-	// reg sub_OHOLDBOT = 1'b0;
-	// reg sub_OLOADTOP = 1'b0;
-	// reg sub_OLOADBOT = 1'b0;
-	// reg sub_ADDSUBTOP = 1'b1;
-	// reg sub_ADDSUBBOT = 1'b1;
-	// reg sub_ZERO = 1'b0;
-	wire sub_CO;
-	// reg sub_CI = 1'b0;
-	// reg [31:0] sub_ACCUMCI = 1'b0;
-	// reg [31:0] sub_ACCUMCO = 1'b0;
-	// reg [31:0] sub_SIGNEXTIN = 1'b0;
-	// reg [31:0] sub_SIGNEXTOUT = 1'b0;
-	wire [31:0] sub_dsp_out;
-
 	SB_MAC16 sub_dsp
 		( 		// port interfaces
-		.A(A_in),
-		.B(B_in),
-		.C(C_in),
-		.D(D_in),
+		.A(A_in_lower),
+		.B(B_in_lower),
+		.C(C_in_lower),
+		.D(D_in_lower),
 		.O(sub_dsp_out),
 		.CLK(clk),
 		.CE(one_reg),
@@ -233,13 +186,8 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable, clk);
 		defparam sub_dsp.PIPELINE_16x16_MULT_REG2 = 1'b0;
 		defparam sub_dsp.TOPOUTPUT_SELECT = 2'b00; // accum register output at O[31:16]
 		defparam sub_dsp.TOPADDSUB_LOWERINPUT = 2'b00;
-
-		// Check this one "defparam i_sbmac16.TOPADDSUB_UPPERINPUT = 1'b1;"
 		defparam sub_dsp.TOPADDSUB_UPPERINPUT = 1'b1;
-
-		// Check this one also "defparam i_sbmac16.TOPADDSUB_CARRYSELECT = 2'b11;"
 		defparam sub_dsp.TOPADDSUB_CARRYSELECT = 2'b10;
-
 		defparam sub_dsp.BOTOUTPUT_SELECT = 2'b00; // accum regsiter output at O[15:0]
 		defparam sub_dsp.BOTADDSUB_LOWERINPUT = 2'b00;
 		defparam sub_dsp.BOTADDSUB_UPPERINPUT = 1'b1;
@@ -268,10 +216,10 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable, clk);
 	 */
 	
 	always @(posedge(clk)) begin
-		A_in <= A[31:16];
-		B_in <= A[15:0];
-		C_in <= B[31:16];
-		D_in <= B[15:0];
+		A_in_lower <= A[31:16];
+		B_in_lower <= A[15:0];
+		C_in_lower <= B[31:16];
+		D_in_lower <= B[15:0];
 
 		case (ALUctl[3:0])
 			/*
@@ -343,12 +291,71 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable, clk);
 		endcase
 	end
 
+// Now need to initialise the DSP's used to speed up comparison checks in branch_enable logic below
+	reg [15:0] A_in_upper; 
+	reg [15:0] B_in_upper;
+	reg [15:0] C_in_upper;
+	reg [15:0] D_in_upper;
+	wire [31:0] comparison_dsp_out;
+
+	SB_MAC16 comp_dsp
+		( 		// port interfaces
+		.A(A_in_upper),
+		.B(B_in_upper),
+		.C(C_in_upper),
+		.D(D_in_upper),
+		.O(comparison_dsp_out),
+		.CLK(clk),
+		.CE(one_reg),
+		.IRSTTOP(zero_reg),
+		.IRSTBOT(zero_reg),
+		.ORSTTOP(zero_reg),
+		.ORSTBOT(zero_reg),
+		.AHOLD(zero_reg),
+		.BHOLD(zero_reg),
+		.CHOLD(zero_reg),
+		.DHOLD(zero_reg),
+		.OHOLDTOP(zero_reg),
+		.OHOLDBOT(zero_reg),
+		.OLOADTOP(zero_reg),
+		.OLOADBOT(zero_reg),
+		.ADDSUBTOP(one_reg),
+		.ADDSUBBOT(one_reg),
+		.CO(sub_CO),
+		.CI(zero_reg),
+		.ACCUMCI(),
+		.ACCUMCO(),
+		.SIGNEXTIN(),
+		.SIGNEXTOUT()
+		);
+		defparam sub_dsp.NEG_TRIGGER = 1'b0;
+		defparam sub_dsp.C_REG = 1'b0;
+		defparam sub_dsp.A_REG = 1'b0;
+		defparam sub_dsp.B_REG = 1'b0;
+		defparam sub_dsp.D_REG = 1'b0;
+		defparam sub_dsp.TOP_8x8_MULT_REG = 1'b0;
+		defparam sub_dsp.BOT_8x8_MULT_REG = 1'b0;
+		defparam sub_dsp.PIPELINE_16x16_MULT_REG1 = 1'b0;
+		defparam sub_dsp.PIPELINE_16x16_MULT_REG2 = 1'b0;
+		defparam sub_dsp.TOPOUTPUT_SELECT = 2'b00; // accum register output at O[31:16]
+		defparam sub_dsp.TOPADDSUB_LOWERINPUT = 2'b00;
+		defparam sub_dsp.TOPADDSUB_UPPERINPUT = 1'b1;
+		defparam sub_dsp.TOPADDSUB_CARRYSELECT = 2'b10;
+		defparam sub_dsp.BOTOUTPUT_SELECT = 2'b00; // accum regsiter output at O[15:0]
+		defparam sub_dsp.BOTADDSUB_LOWERINPUT = 2'b00;
+		defparam sub_dsp.BOTADDSUB_UPPERINPUT = 1'b1;
+		defparam sub_dsp.BOTADDSUB_CARRYSELECT = 2'b00;
+		defparam sub_dsp.MODE_8x8 = 1'b1;
+		defparam sub_dsp.A_SIGNED = 1'b1;
+		defparam sub_dsp.B_SIGNED = 1'b1;
+
 	always @(posedge(clk)) begin
 		/*
 		 *	ALU used here to carry out mathematical operations to determine if a branch should be taken.
 		 */
 
 		case (ALUctl[6:4])
+		// Assuming that the first two lines are relatively fast. Last 4 lines can be sped up by using the DSPs
 			`kSAIL_MICROARCHITECTURE_ALUCTL_6to4_BEQ:	Branch_Enable = (ALUOut == 0);
 			`kSAIL_MICROARCHITECTURE_ALUCTL_6to4_BNE:	Branch_Enable = !(ALUOut == 0);
 			`kSAIL_MICROARCHITECTURE_ALUCTL_6to4_BLT:	Branch_Enable = ($signed(A) < $signed(B));

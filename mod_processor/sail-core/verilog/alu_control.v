@@ -49,7 +49,7 @@
 
 
 
-module ALUControl(FuncCode, ALUCtl, Opcode);
+module ALUControl(FuncCode, ALUCtl, Opcode, clk);
 	input [3:0]		FuncCode;
 	input [6:0]		Opcode;
 	output reg [6:0]	ALUCtl;
