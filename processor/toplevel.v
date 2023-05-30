@@ -41,11 +41,8 @@
  *	Top level entity, linking cpu with data and instruction memory.
  */
 
-module top (led 
-//mem_instruction_count
-);
+module top (led);
 	output [7:0]	led;
-	// input [5:0] mem_instruction_count;
 
 	wire		clk;
 	wire 		clk_proc;
@@ -95,7 +92,7 @@ module top (led
 	);
 
 	data_mem data_mem_inst(
-			.clk(sys_clk),
+			.clk(clk_pll),
 			.addr(data_addr),
 			.write_data(data_WrData),
 			.memwrite(data_memwrite), 
@@ -106,7 +103,7 @@ module top (led
 			.clk_stall(data_clk_stall)
 		);
 
-	assign clk_proc = (data_clk_stall) ? 1'b1 : sys_clk;
+	assign clk_proc = (data_clk_stall) ? 1'b1 : clk_pll;
 
 
   	PLL PLL_inst (

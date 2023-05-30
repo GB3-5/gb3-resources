@@ -93,8 +93,8 @@ module cpu(
 		*/
 
 		// Check if the previous instruction was a memory instruction and update the memory instruction counter
-		if (instruction_history[(instruction_history_index - 1) & 31][6:0] == 35 || // Load instruction (opcode: 0000011)
-			instruction_history[(instruction_history_index - 1) & 31][6:0] == 39 || // Store instruction (opcode: 0100011)
+		if (instruction_history[(instruction_history_index - 1) & 31][6:0] == 35 || // Instructions that load data from memory (opcode: 0000011)
+			instruction_history[(instruction_history_index - 1) & 31][6:0] == 39 || // Store data in memeory (opcode: 0100011)
 			instruction_history[(instruction_history_index - 1) & 31][6:0] == 3 || // LUI instruction (opcode: 0110111)
 			instruction_history[(instruction_history_index - 1) & 31][6:0] == 19) // AUIPC instruction (opcode: 0010111)
 		begin

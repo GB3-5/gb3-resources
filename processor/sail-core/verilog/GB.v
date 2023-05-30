@@ -7,5 +7,5 @@ module GB(
         .USER_SIGNAL_TO_GLOBAL_BUFFER(clk_pll),
         .GLOBAL_BUFFER_OUTPUT(sys_clk)
 	);
-
+	
 endmodule
