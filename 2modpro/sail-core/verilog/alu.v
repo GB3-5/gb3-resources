@@ -39,22 +39,12 @@
 `include "../include/rv32i-defines.v"
 `include "../include/sail-core-defines.v"
 
-// There is no need to import any extra libraries to use the FPGA's hard primimtives? Doesn't seem so.
-// FPGA primitive for ALU addition/subtraction is deliberately instantiated here, as OG implementation does not automatically infer the use of the DSP. 
-// See output_no_dsp.txt for confirmation of the above. 
-
 
 
 /*
  *	Description:
  *
  *		This module implements the ALU for the RV32I.
-
- *		Personal notes:
- *		- 32-bit ALU, 7-bit control signal, 2 32-bit inputs, 1 32-bit output
- *		- There is no need to import any extra libraries to use the FPGA's hard primimtives? Doesn't seem so.
- * 		- FPGA primitive for ALU addition/subtraction is deliberately instantiated here, as OG implementation does not automatically infer the use of the DSP. 
- *		- See output_no_dsp.txt for confirmation of the above. 
  */
 
 
@@ -64,20 +54,27 @@
  *	field is only unique across the instructions that are actually
  *	fed to the ALU.
  */
-module alu(ALUctl, A, B, ALUOut, Branch_Enable, clk);
+module alu(ALUctl, A, B, ALUOut, Branch_Enable);
 	input [6:0]		ALUctl;
 	input [31:0]		A;
 	input [31:0]		B;
-	input 				clk;
 	output reg [31:0]	ALUOut;
 	output reg		Branch_Enable;
 
-	/* 
-	 * 	Instantiate the DSP for addition
-	 * 	Configuration complete (not checked), port mapping incomplete (not checked)
-	 *  Use the DSP in unegistered mode for now, since the ALU is purely combinatorial
+	/*
+	 *	This uses Yosys's support for nonzero initial values:
+	 *
+	 *		https://github.com/YosysHQ/yosys/commit/0793f1b196df536975a044a4ce53025c81d00c7f
+	 *
+	 *	Rather than using this simulation construct (`initial`),
+	 *	the design should instead use a reset signal going to
+	 *	modules in the design.
 	 */
-	
+	initial begin
+		ALUOut = 32'b0;
+		Branch_Enable = 1'b0;
+	end
+
 	wire add_CO;
 	wire sub_CO;
 
@@ -196,26 +193,7 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable, clk);
 		defparam sub_dsp.A_SIGNED = 1'b1;
 		defparam sub_dsp.B_SIGNED = 1'b1;
 
-	/*
-	 *	This uses Yosys's support for nonzero initial values:
-	 *
-	 *		https://github.com/YosysHQ/yosys/commit/0793f1b196df536975a044a4ce53025c81d00c7f
-	 *
-	 *	Rather than using this simulation construct (`initial`),
-	 *	the design should instead use a reset signal going to
-	 *	modules in the design.
-	 */
-	initial begin
-		ALUOut = 32'b0;
-		Branch_Enable = 1'b0;
-	end
-
-	/*
-	 *	For the basic ALU operations, the case statement arguments are op-codes derived from the included sail-core-defines.v file.
-	 * 	When using the DSP, the same structure can be used, just with the DSP being invoked. 
-	 */
-	
-	always @(*) begin
+	always @(ALUctl, A, B) begin
 		A_in_lower <= A[31:16];
 		B_in_lower <= A[15:0];
 		C_in_lower <= B[31:16];
@@ -234,13 +212,11 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable, clk);
 
 			/*
 			 *	ADD (the fields also match AUIPC, all loads, all stores, and ADDI)
-			 * 	Can be done with the DSP
 			 */
 			`kSAIL_MICROARCHITECTURE_ALUCTL_3to0_ADD:	ALUOut = add_dsp_out;
 
 			/*
 			 *	SUBTRACT (the fields also matches all branches)
-			 *	Can be done with the DSP
 			 */
 			`kSAIL_MICROARCHITECTURE_ALUCTL_3to0_SUB:	ALUOut = sub_dsp_out;
 
@@ -291,71 +267,8 @@ module alu(ALUctl, A, B, ALUOut, Branch_Enable, clk);
 		endcase
 	end
 
-// Now need to initialise the DSP's used to speed up comparison checks in branch_enable logic below
-	// reg [15:0] A_in_upper; 
-	// reg [15:0] B_in_upper;
-	// reg [15:0] C_in_upper;
-	// reg [15:0] D_in_upper;
-	// wire [31:0] comparison_dsp_out;
-
-	// SB_MAC16 comp_dsp
-	// 	( 		// port interfaces
-	// 	.A(A_in_upper),
-	// 	.B(B_in_upper),
-	// 	.C(C_in_upper),
-	// 	.D(D_in_upper),
-	// 	.O(comparison_dsp_out),
-	// 	.CLK(clk),
-	// 	.CE(one_reg),
-	// 	.IRSTTOP(zero_reg),
-	// 	.IRSTBOT(zero_reg),
-	// 	.ORSTTOP(zero_reg),
-	// 	.ORSTBOT(zero_reg),
-	// 	.AHOLD(zero_reg),
-	// 	.BHOLD(zero_reg),
-	// 	.CHOLD(zero_reg),
-	// 	.DHOLD(zero_reg),
-	// 	.OHOLDTOP(zero_reg),
-	// 	.OHOLDBOT(zero_reg),
-	// 	.OLOADTOP(zero_reg),
-	// 	.OLOADBOT(zero_reg),
-	// 	.ADDSUBTOP(one_reg),
-	// 	.ADDSUBBOT(one_reg),
-	// 	.CO(sub_CO),
-	// 	.CI(zero_reg),
-	// 	.ACCUMCI(),
-	// 	.ACCUMCO(),
-	// 	.SIGNEXTIN(),
-	// 	.SIGNEXTOUT()
-	// 	);
-	// 	defparam sub_dsp.NEG_TRIGGER = 1'b0;
-	// 	defparam sub_dsp.C_REG = 1'b0;
-	// 	defparam sub_dsp.A_REG = 1'b0;
-	// 	defparam sub_dsp.B_REG = 1'b0;
-	// 	defparam sub_dsp.D_REG = 1'b0;
-	// 	defparam sub_dsp.TOP_8x8_MULT_REG = 1'b0;
-	// 	defparam sub_dsp.BOT_8x8_MULT_REG = 1'b0;
-	// 	defparam sub_dsp.PIPELINE_16x16_MULT_REG1 = 1'b0;
-	// 	defparam sub_dsp.PIPELINE_16x16_MULT_REG2 = 1'b0;
-	// 	defparam sub_dsp.TOPOUTPUT_SELECT = 2'b00; // accum register output at O[31:16]
-	// 	defparam sub_dsp.TOPADDSUB_LOWERINPUT = 2'b00;
-	// 	defparam sub_dsp.TOPADDSUB_UPPERINPUT = 1'b1;
-	// 	defparam sub_dsp.TOPADDSUB_CARRYSELECT = 2'b10;
-	// 	defparam sub_dsp.BOTOUTPUT_SELECT = 2'b00; // accum regsiter output at O[15:0]
-	// 	defparam sub_dsp.BOTADDSUB_LOWERINPUT = 2'b00;
-	// 	defparam sub_dsp.BOTADDSUB_UPPERINPUT = 1'b1;
-	// 	defparam sub_dsp.BOTADDSUB_CARRYSELECT = 2'b00;
-	// 	defparam sub_dsp.MODE_8x8 = 1'b1;
-	// 	defparam sub_dsp.A_SIGNED = 1'b1;
-	// 	defparam sub_dsp.B_SIGNED = 1'b1;
-
-	always @(posedge(clk)) begin
-		/*
-		 *	ALU used here to carry out mathematical operations to determine if a branch should be taken.
-		 */
-
+	always @(ALUctl, ALUOut, A, B) begin
 		case (ALUctl[6:4])
-		// Assuming that the first two lines are relatively fast. Last 4 lines can be sped up by using the DSPs
 			`kSAIL_MICROARCHITECTURE_ALUCTL_6to4_BEQ:	Branch_Enable = (ALUOut == 0);
 			`kSAIL_MICROARCHITECTURE_ALUCTL_6to4_BNE:	Branch_Enable = !(ALUOut == 0);
 			`kSAIL_MICROARCHITECTURE_ALUCTL_6to4_BLT:	Branch_Enable = ($signed(A) < $signed(B));

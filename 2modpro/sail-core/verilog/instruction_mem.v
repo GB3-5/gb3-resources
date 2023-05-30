@@ -35,73 +35,44 @@
 */
 
 
+
 /*
- *	top.v
- *
- *	Top level entity, linking cpu with data and instruction memory.
+ *	RISC-V instruction memory
  */
 
-module top (led);
-	output [7:0]	led;
 
-	wire		clk_proc;
-	wire		data_clk_stall;
-	
-	wire		clk;
-	reg		ENCLKHF		= 1'b1;	// Plock enable
-	reg		CLKHF_POWERUP	= 1'b1;	// Power up the HFOSC circuit
 
+module instruction_memory(addr, out);
+	input [31:0]		addr;
+	output [31:0]		out;
 
 	/*
-	 *	Use the iCE40's hard primitive for the clock source.
+	 *	Size the instruction memory.
+	 *
+	 *	(Bad practice: The constant should be a `define).
 	 */
-	SB_HFOSC #(.CLKHF_DIV("0b10")) OSCInst0 (
-		.CLKHFEN(ENCLKHF),
-		.CLKHFPU(CLKHF_POWERUP),
-		.CLKHF(clk)
-	);
+	reg [31:0]		instruction_memory[0:2**12-1];
 
 	/*
-	 *	Memory interface
+	 *	According to the "iCE40 SPRAM Usage Guide" (TN1314 Version 1.0), page 5:
+	 *
+	 *		"SB_SPRAM256KA RAM does not support initialization through device configuration."
+	 *
+	 *	The only way to have an initializable memory is to use the Block RAM.
+	 *	This uses Yosys's support for nonzero initial values:
+	 *
+	 *		https://github.com/YosysHQ/yosys/commit/0793f1b196df536975a044a4ce53025c81d00c7f
+	 *
+	 *	Rather than using this simulation construct (`initial`),
+	 *	the design should instead use a reset signal going to
+	 *	modules in the design.
 	 */
-	wire[31:0]	inst_in;
-	wire[31:0]	inst_out;
-	wire[31:0]	data_out;
-	wire[31:0]	data_addr;
-	wire[31:0]	data_WrData;
-	wire		data_memwrite;
-	wire		data_memread;
-	wire[3:0]	data_sign_mask;
+	initial begin
+		/*
+		 *	read from "program.hex" and store the instructions in instruction memory
+		 */
+		$readmemh("verilog/program.hex",instruction_memory);
+	end
 
-
-	cpu processor(
-		.clk(clk_proc),
-		.inst_mem_in(inst_in),
-		.inst_mem_out(inst_out),
-		.data_mem_out(data_out),
-		.data_mem_addr(data_addr),
-		.data_mem_WrData(data_WrData),
-		.data_mem_memwrite(data_memwrite),
-		.data_mem_memread(data_memread),
-		.data_mem_sign_mask(data_sign_mask)
-	);
-
-	instruction_memory inst_mem( 
-		.addr(inst_in), 
-		.out(inst_out)
-	);
-
-	data_mem data_mem_inst(
-			.clk(clk),
-			.addr(data_addr),
-			.write_data(data_WrData),
-			.memwrite(data_memwrite), 
-			.memread(data_memread), 
-			.read_data(data_out),
-			.sign_mask(data_sign_mask),
-			.led(led),
-			.clk_stall(data_clk_stall)
-		);
-
-	assign clk_proc = (data_clk_stall) ? 1'b1 : clk;
+	assign out = instruction_memory[addr >> 2];
 endmodule

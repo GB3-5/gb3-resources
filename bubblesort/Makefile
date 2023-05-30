@@ -69,7 +69,8 @@ install: all
 	# New below
 	cp program.hex $(GB3_ROOT)/mod_processor/programs/
 	cp data.hex $(GB3_ROOT)/mod_processor/programs/
-
+	cp program.hex $(GB3_ROOT)/2modpro/programs/
+	cp data.hex $(GB3_ROOT)/2modpro/programs/
 clean:
 	$(RM) init.i *.o $(PROGRAM) $(PROGRAM).sr $(PROGRAM).map
 	$(RM) init-sf.i *.o $(PROGRAM-SF) $(PROGRAM-SF).sr $(PROGRAM-SF).map

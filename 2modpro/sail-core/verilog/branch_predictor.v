@@ -35,73 +35,76 @@
 */
 
 
+
 /*
- *	top.v
- *
- *	Top level entity, linking cpu with data and instruction memory.
+ *		Branch Predictor FSM
  */
 
-module top (led);
-	output [7:0]	led;
-
-	wire		clk_proc;
-	wire		data_clk_stall;
-	
-	wire		clk;
-	reg		ENCLKHF		= 1'b1;	// Plock enable
-	reg		CLKHF_POWERUP	= 1'b1;	// Power up the HFOSC circuit
-
-
-	/*
-	 *	Use the iCE40's hard primitive for the clock source.
-	 */
-	SB_HFOSC #(.CLKHF_DIV("0b10")) OSCInst0 (
-		.CLKHFEN(ENCLKHF),
-		.CLKHFPU(CLKHF_POWERUP),
-		.CLKHF(clk)
+module branch_predictor(
+		clk,
+		actual_branch_decision,
+		branch_decode_sig,
+		branch_mem_sig,
+		in_addr,
+		offset,
+		branch_addr,
+		prediction
 	);
 
 	/*
-	 *	Memory interface
+	 *	inputs
 	 */
-	wire[31:0]	inst_in;
-	wire[31:0]	inst_out;
-	wire[31:0]	data_out;
-	wire[31:0]	data_addr;
-	wire[31:0]	data_WrData;
-	wire		data_memwrite;
-	wire		data_memread;
-	wire[3:0]	data_sign_mask;
+	input		clk;
+	input		actual_branch_decision;
+	input		branch_decode_sig;
+	input		branch_mem_sig;
+	input [31:0]	in_addr;
+	input [31:0]	offset;
 
+	/*
+	 *	outputs
+	 */
+	output [31:0]	branch_addr;
+	output		prediction;
 
-	cpu processor(
-		.clk(clk_proc),
-		.inst_mem_in(inst_in),
-		.inst_mem_out(inst_out),
-		.data_mem_out(data_out),
-		.data_mem_addr(data_addr),
-		.data_mem_WrData(data_WrData),
-		.data_mem_memwrite(data_memwrite),
-		.data_mem_memread(data_memread),
-		.data_mem_sign_mask(data_sign_mask)
-	);
+	/*
+	 *	internal state
+	 */
+	reg [1:0]	s;
 
-	instruction_memory inst_mem( 
-		.addr(inst_in), 
-		.out(inst_out)
-	);
+	reg		branch_mem_sig_reg;
 
-	data_mem data_mem_inst(
-			.clk(clk),
-			.addr(data_addr),
-			.write_data(data_WrData),
-			.memwrite(data_memwrite), 
-			.memread(data_memread), 
-			.read_data(data_out),
-			.sign_mask(data_sign_mask),
-			.led(led),
-			.clk_stall(data_clk_stall)
-		);
+	/*
+	 *	The `initial` statement below uses Yosys's support for nonzero
+	 *	initial values:
+	 *
+	 *		https://github.com/YosysHQ/yosys/commit/0793f1b196df536975a044a4ce53025c81d00c7f
+	 *
+	 *	Rather than using this simulation construct (`initial`),
+	 *	the design should instead use a reset signal going to
+	 *	modules in the design and to thereby set the values.
+	 */
+	initial begin
+		s = 2'b00;
+		branch_mem_sig_reg = 1'b0;
+	end
 
-	assign clk_proc = (data_clk_stall) ? 1'b1 : clk;
+	always @(negedge clk) begin
+		branch_mem_sig_reg <= branch_mem_sig;
+	end
+
+	/*
+	 *	Using this microarchitecture, branches can't occur consecutively
+	 *	therefore can use branch_mem_sig as every branch is followed by
+	 *	a bubble, so a 0 to 1 transition
+	 */
+	always @(posedge clk) begin
+		if (branch_mem_sig_reg) begin
+			s[1] <= (s[1]&s[0]) | (s[0]&actual_branch_decision) | (s[1]&actual_branch_decision);
+			s[0] <= (s[1]&(!s[0])) | ((!s[0])&actual_branch_decision) | (s[1]&actual_branch_decision);
+		end
+	end
+
+	assign branch_addr = in_addr + offset;
+	assign prediction = s[1] & branch_decode_sig;
 endmodule

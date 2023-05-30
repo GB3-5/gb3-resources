@@ -35,73 +35,39 @@
 */
 
 
+
 /*
- *	top.v
- *
- *	Top level entity, linking cpu with data and instruction memory.
+ *	RISC-V IMMEDIATE GENERATOR
  */
 
-module top (led);
-	output [7:0]	led;
-
-	wire		clk_proc;
-	wire		data_clk_stall;
-	
-	wire		clk;
-	reg		ENCLKHF		= 1'b1;	// Plock enable
-	reg		CLKHF_POWERUP	= 1'b1;	// Power up the HFOSC circuit
 
 
-	/*
-	 *	Use the iCE40's hard primitive for the clock source.
-	 */
-	SB_HFOSC #(.CLKHF_DIV("0b10")) OSCInst0 (
-		.CLKHFEN(ENCLKHF),
-		.CLKHFPU(CLKHF_POWERUP),
-		.CLKHF(clk)
-	);
+module imm_gen(inst, imm);
 
-	/*
-	 *	Memory interface
-	 */
-	wire[31:0]	inst_in;
-	wire[31:0]	inst_out;
-	wire[31:0]	data_out;
-	wire[31:0]	data_addr;
-	wire[31:0]	data_WrData;
-	wire		data_memwrite;
-	wire		data_memread;
-	wire[3:0]	data_sign_mask;
+	input [31:0]		inst;
+	output reg [31:0]	imm;
 
+	initial begin
+		imm = 32'b0;
+	end
 
-	cpu processor(
-		.clk(clk_proc),
-		.inst_mem_in(inst_in),
-		.inst_mem_out(inst_out),
-		.data_mem_out(data_out),
-		.data_mem_addr(data_addr),
-		.data_mem_WrData(data_WrData),
-		.data_mem_memwrite(data_memwrite),
-		.data_mem_memread(data_memread),
-		.data_mem_sign_mask(data_sign_mask)
-	);
-
-	instruction_memory inst_mem( 
-		.addr(inst_in), 
-		.out(inst_out)
-	);
-
-	data_mem data_mem_inst(
-			.clk(clk),
-			.addr(data_addr),
-			.write_data(data_WrData),
-			.memwrite(data_memwrite), 
-			.memread(data_memread), 
-			.read_data(data_out),
-			.sign_mask(data_sign_mask),
-			.led(led),
-			.clk_stall(data_clk_stall)
-		);
-
-	assign clk_proc = (data_clk_stall) ? 1'b1 : clk;
+	always @(inst) begin
+		case ({inst[6:5], inst[3:2]})
+			4'b0000: //I-type
+				imm = { {21{inst[31]}}, inst[30:20] };
+			4'b1101: //I-type JALR
+				imm = { {21{inst[31]}}, inst[30:21], 1'b0 };
+			4'b0100: //S-type
+				imm = { {21{inst[31]}}, inst[30:25], inst[11:7] };
+			4'b0101: //U-type
+				imm = { inst[31:12], 12'b0 };
+			4'b0001: //U-type
+				imm = { inst[31:12], 12'b0 };
+			4'b1111: //UJ-type
+				imm = { {12{inst[31]}}, inst[19:12], inst[20], inst[30:21], 1'b0 };
+			4'b1100: //SB-type
+				imm = { {20{inst[31]}}, inst[7], inst[30:25], inst[11:8], 1'b0 };
+			default : imm = { {21{inst[31]}}, inst[30:20] };
+		endcase
+	end
 endmodule
