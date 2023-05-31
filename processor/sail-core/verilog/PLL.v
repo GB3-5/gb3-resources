@@ -19,7 +19,7 @@ SB_PLL40_CORE PLL_inst(.REFERENCECLK(clk),
 //\\ Fin=48, Fout=24;
 defparam PLL_inst.DIVR = 4'b0000;
 defparam PLL_inst.DIVF = 7'b0001111;
-defparam PLL_inst.DIVQ = 3'b101;
+defparam PLL_inst.DIVQ = 3'b110;
 defparam PLL_inst.FILTER_RANGE = 3'b100;
 defparam PLL_inst.FEEDBACK_PATH = "SIMPLE";
 defparam PLL_inst.DELAY_ADJUSTMENT_MODE_FEEDBACK = "FIXED";
