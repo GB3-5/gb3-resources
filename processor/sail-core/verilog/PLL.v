@@ -1,17 +1,33 @@
-module PLL(
-	input wire clk,
-	output wire clk_pll
-	);
+module PLL(clk,
+        clk_pll);
 
-	SB_PLL40_CORE #(
-		.FEEDBACK_PATH("SIMPLE"),
-		.DIVQ(7'b0000000),	// DIVQ = 0, VCO clock divider (divide by 1)
-		.DIVR(4'b1110),		// DIVR = 15, reference clock divider (divide by 15)
-		.ENABLE_ICEGATE(1'b1)	// Enable ICEGATE, PLL is in low power mode
-	) PLL_inst (
-		.REFERENCECLK(clk),
-		.PLLOUTGLOBAL(clk_pll)
-	);
+input clk;
+output clk_pll;
+
+SB_PLL40_CORE PLL_inst(.REFERENCECLK(clk),
+                         .PLLOUTGLOBAL(clk_pll),
+                         .EXTFEEDBACK(),
+                         .DYNAMICDELAY(),
+                         .RESETB(1'b0),
+                         .BYPASS(1'b0),
+                         .LATCHINPUTVALUE(1'b1),
+                         .LOCK(),
+                         .SDI(),
+                         .SDO(),
+                         .SCLK());
+
+//\\ Fin=48, Fout=24;
+defparam PLL_inst.DIVR = 4'b0000;
+defparam PLL_inst.DIVF = 7'b0001111;
+defparam PLL_inst.DIVQ = 3'b101;
+defparam PLL_inst.FILTER_RANGE = 3'b100;
+defparam PLL_inst.FEEDBACK_PATH = "SIMPLE";
+defparam PLL_inst.DELAY_ADJUSTMENT_MODE_FEEDBACK = "FIXED";
+defparam PLL_inst.FDA_FEEDBACK = 4'b0000;
+defparam PLL_inst.DELAY_ADJUSTMENT_MODE_RELATIVE = "FIXED";
+defparam PLL_inst.FDA_RELATIVE = 4'b0000;
+defparam PLL_inst.SHIFTREG_DIV_MODE = 2'b00;
+defparam PLL_inst.PLLOUT_SELECT = "GENCLK";
+defparam PLL_inst.ENABLE_ICEGATE = 1'b1;
 
 endmodule
-
