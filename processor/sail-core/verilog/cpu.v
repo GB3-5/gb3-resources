@@ -493,6 +493,21 @@ module cpu(
 			.out(pc_mux0)
 		);
 
+	/////////////////////////////// ADDED THIS BIT, DK IF ITS RIGHT
+	instruction_memory inst_mem (
+    .addr(inst_addr[7:0]),    // Assuming inst_addr is the 8-bit address for instruction memory
+    .we(1'b0),                // Set to 0 for read operation
+    .wdata(16'h0),            // Not used for read operation
+    .mask(16'h0),             // Not used for read operation
+    .clk(clk),                // Pass the system clock
+    .clke(clke),              // Pass the system clock enable
+    .raddr(inst_addr[7:0]),   // Assuming inst_addr is the 8-bit address for instruction memory
+    .re(1'b1),                // Set to 1 for read operation
+    .rclk(clk),               // Pass the system clock
+    .rclke(clke),             // Pass the system clock enable
+    .rdata(inst_mem_out)      // Connect the output to inst_mem_out
+		);
+
 	wire[31:0] mem_regwb_mux_out; //TODO copy of wb_mux but in mem stage, move back and cleanup
 	//A copy of the writeback mux, but in MEM stage //TODO move back and cleanup
 	mux2to1 mem_regwb_mux(

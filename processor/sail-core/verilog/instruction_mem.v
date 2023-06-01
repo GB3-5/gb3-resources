@@ -41,7 +41,7 @@
  */
 
 
-
+/*
 module instruction_memory(addr, out);
 	input [31:0]		addr;
 	output [31:0]		out;
@@ -75,4 +75,53 @@ module instruction_memory(addr, out);
 	end
 
 	assign out = instruction_memory[addr >> 2];
+endmodule
+*/
+
+module instruction_memory (
+    input [7:0] addr,
+    input we,
+    input [15:0] wdata,
+    input [15:0] mask,
+    input clk,
+    input clke,
+    input [7:0] raddr,
+    input re,
+    input rclk,
+    input rclke,
+    output [15:0] rdata
+);
+    reg [15:0] bram_data [0:255];
+
+    // Instantiate the BRAM modules
+    genvar i;
+    generate
+        for (i = 0; i < 10; i = i + 1) begin : BRAM_INST
+            bram_module #(   ///////////////////////// does bram_module need to be replaced by something
+                .DATA_WIDTH(16),  // Set the data width to 16 bits
+                .ADDR_WIDTH(8)    // Set the address width to 8 bits
+            ) bram_inst (
+                .WDATA(wdata),
+                .MASK(mask),
+                .WADDR(addr),
+                .WE(we),
+                .WCLKE(clke),
+                .WCLK(clk),
+                .RDATA(rdata),
+                .RADDR(raddr),
+                .RE(re),
+                .RCLK(rclk),
+                .RCLKE(rclke)
+            );
+        end
+    endgenerate
+
+    // Connect the BRAM outputs to the instruction memory output
+    //////////////////////// assign out = bram_data[addr]; DK IF THIS SHOULD BE HERE OR THE NEXT LINE BELOW
+	assign inst_mem_out = bram_data[addr];
+
+    // Initialize the BRAM data
+    initial begin
+        $readmemh("verilog/program.hex", bram_data);
+    end
 endmodule
