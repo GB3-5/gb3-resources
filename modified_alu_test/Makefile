@@ -67,8 +67,8 @@ install: all
 	cp data.hex $(GB3_ROOT)/processor/programs/
 	
 	# New below
-	cp program.hex $(GB3_ROOT)/mod_processor/programs/
-	cp data.hex $(GB3_ROOT)/mod_processor/programs/
+	cp program.hex $(GB3_ROOT)/1modpro/programs/
+	cp data.hex $(GB3_ROOT)/1modpro/programs/
 	cp program.hex $(GB3_ROOT)/2modpro/programs/
 	cp data.hex $(GB3_ROOT)/2modpro/programs/
 

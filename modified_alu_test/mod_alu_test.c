@@ -43,7 +43,7 @@ int main(void) {
   int c;
 
   a = 3;
-  b = 4; 
+  b = 3; 
 
   c = a + b;
   *gDebugLedsMemoryMappedRegister = 0xFF;
@@ -51,10 +51,15 @@ int main(void) {
   for (int i = 0; i < c; i++) {
       *gDebugLedsMemoryMappedRegister = ~(*gDebugLedsMemoryMappedRegister);
     }
+      for (int k = 0; k < 100000; k++) {
+      //Null statement to waste time
+        ;
+      }
 
   for (int j = 0; j < 1000000; j++) {
       //Null statement to waste time
     ;
   }
+
   return 0;
 }

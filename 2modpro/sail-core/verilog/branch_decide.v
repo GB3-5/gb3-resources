@@ -44,16 +44,47 @@
 
 
 
-module branch_decision (Branch, Predicted, Branch_Enable, Jump, Mispredict, Decision, Branch_Jump_Trigger);
-	input	Branch;
-	input	Predicted;
-	input	Branch_Enable;
-	input	Jump;
-	output	Mispredict;
-	output	Decision;
-	output	Branch_Jump_Trigger;
+// module branch_decision (Branch, Predicted, Branch_Enable, Jump, Mispredict, Decision, Branch_Jump_Trigger);
+// 	input	Branch;
+// 	input	Predicted;
+// 	input	Branch_Enable;
+// 	input	Jump;
+// 	output	Mispredict;
+// 	output	Decision;
+// 	output	Branch_Jump_Trigger;
 
-	assign	Branch_Jump_Trigger	= ((!Predicted) & (Branch & Branch_Enable)) | Jump;
-	assign	Decision		= (Branch & Branch_Enable);
-	assign	Mispredict		= (Predicted & (!(Branch & Branch_Enable)));
+// 	assign	Branch_Jump_Trigger	= ((!Predicted) & (Branch & Branch_Enable)) | Jump;
+// 	assign	Decision		= (Branch & Branch_Enable);
+// 	assign	Mispredict		= (Predicted & (!(Branch & Branch_Enable)));
+// endmodule
+
+module branch_decision (
+  input wire Branch,
+  input wire Predicted,
+  input wire Branch_Enable,
+  input wire Jump,
+  input wire clk,
+  output reg Mispredict,
+  output reg Decision,
+  output reg Branch_Jump_Trigger
+);
+
+  reg prev_Predicted;
+  reg prev_Branch;
+  reg prev_Branch_Enable;
+  reg prev_Jump;
+
+  always @(posedge clk) begin
+    prev_Predicted <= Predicted;
+    prev_Branch <= Branch;
+    prev_Branch_Enable <= Branch_Enable;
+    prev_Jump <= Jump;
+  end
+
+  always @(posedge clk) begin
+    Branch_Jump_Trigger <= ((!prev_Predicted) & (prev_Branch & prev_Branch_Enable)) | prev_Jump;
+    Decision <= (prev_Branch & prev_Branch_Enable);
+    Mispredict <= (prev_Predicted & (!(prev_Branch & prev_Branch_Enable)));
+  end
+
 endmodule
