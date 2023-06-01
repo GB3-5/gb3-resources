@@ -46,7 +46,7 @@ module cpu(
 			clk,
 			inst_mem_in,
 			inst_mem_out,
-			mem_instruction_count,
+			slow_clk,
 			data_mem_out,
 			data_mem_addr,
 			data_mem_WrData,
@@ -74,7 +74,9 @@ module cpu(
 	 */ 
 	reg [6:0] instruction_history [31:0];
 	reg [5:0] instruction_history_index;
-	output [5:0] mem_instruction_count; // Counter for number of memory instructions in the past 32 instructions, output to top level
+	reg [5:0] mem_instruction_count; // Counter for number of memory instructions in the past 32 instructions
+
+	output wire slow_clk; // Output to top level to indicate whether the clock should be slowed down
 
 	/*
 	* Add to instruction history and wrap around when full
@@ -101,6 +103,8 @@ module cpu(
 			mem_instruction_count <= mem_instruction_count + 1;
 		end
 	end
+
+	assign slow_clk = (mem_instruction_count > 10); // Indicate to ramp down clock speed if the previous 10 instructions all involve memory access
 	
 	/*
 	 *	Data Memory

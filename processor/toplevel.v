@@ -44,9 +44,12 @@
 module top (led);
 	output [7:0]	led;
 
+	wire slow_clk; // indicates when the clock needs to be ramped down, see cpu.v
+
 	wire		clk;
 	wire 		clk_proc;
 	wire 		clk_pll;
+	wire 		clk_sys;
 	reg		ENCLKHF		= 1'b1;	// Plock enable
 	reg		CLKHF_POWERUP	= 1'b1;	// Power up the HFOSC circuit
 
@@ -78,6 +81,7 @@ module top (led);
 		.inst_mem_in(inst_in),
 		.inst_mem_out(inst_out),
 		.data_mem_out(data_out),
+		.slow_clk(slow_clk),
 		.data_mem_addr(data_addr),
 		.data_mem_WrData(data_WrData),
 		.data_mem_memwrite(data_memwrite),
@@ -91,7 +95,7 @@ module top (led);
 	);
 
 	data_mem data_mem_inst(
-			.clk(clk_pll),
+			.clk(clk_sys),
 			.addr(data_addr),
 			.write_data(data_WrData),
 			.memwrite(data_memwrite), 
@@ -102,7 +106,9 @@ module top (led);
 			.clk_stall(data_clk_stall)
 		);
 
-	assign clk_proc = (data_clk_stall) ? 1'b1 : clk_pll;
+	assign clk_sys = (slow_clk) ? clk_pll : clk;
+
+	assign clk_proc = (data_clk_stall) ? 1'b1 : clk_sys;
 
   	PLL PLL_inst (
     .clk(clk),
