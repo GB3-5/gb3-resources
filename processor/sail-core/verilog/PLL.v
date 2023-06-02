@@ -8,9 +8,9 @@ SB_PLL40_CORE PLL_inst(.REFERENCECLK(clk),
                          .PLLOUTGLOBAL(clk_pll),
                          .EXTFEEDBACK(),
                          .DYNAMICDELAY(),
-                         .RESETB(1'b0),
+                         .RESETB(1'b1), // Runs continuously - never in reset state, 1'b0
                          .BYPASS(1'b0),
-                         .LATCHINPUTVALUE(1'b1),
+                         .LATCHINPUTVALUE(1'b1), // Enabled - PLL in low-power mode, (see ice40 family datasheet) 
                          .LOCK(),
                          .SDI(),
                          .SDO(),
@@ -28,6 +28,6 @@ defparam PLL_inst.DELAY_ADJUSTMENT_MODE_RELATIVE = "FIXED";
 defparam PLL_inst.FDA_RELATIVE = 4'b0000;
 defparam PLL_inst.SHIFTREG_DIV_MODE = 2'b00;
 defparam PLL_inst.PLLOUT_SELECT = "GENCLK";
-defparam PLL_inst.ENABLE_ICEGATE = 1'b1;
+defparam PLL_inst.ENABLE_ICEGATE = 1'b1; // Enabled - saves power, (see ice40 family datasheet)
 
 endmodule

@@ -106,7 +106,7 @@ module top (led);
 			.clk_stall(data_clk_stall)
 		);
 
-	assign clk_sys = (slow_clk) ? clk_pll : clk;
+	assign clk_sys = (slow_clk) ? clk_pll : clk; // Ramp down the clock when memory access levels are high!
 
 	assign clk_proc = (data_clk_stall) ? 1'b1 : clk_sys;
 

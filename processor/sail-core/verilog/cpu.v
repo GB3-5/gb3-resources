@@ -73,8 +73,8 @@ module cpu(
 	 * Register array for storing history of past 32 instructions
 	 */ 
 	reg [6:0] instruction_history [31:0];
-	reg [5:0] instruction_history_index;
-	reg [5:0] mem_instruction_count; // Counter for number of memory instructions in the past 32 instructions
+	reg [5:0] instruction_history_index; // To index the register
+	reg [5:0] mem_instruction_count; // Counter to track how many of the past 32 instructions involve memory access
 
 	output wire slow_clk; // Output to top level to indicate whether the clock should be slowed down
 
@@ -104,7 +104,7 @@ module cpu(
 		end
 	end
 
-	assign slow_clk = (mem_instruction_count > 10); // Indicate to ramp down clock speed if the previous 10 instructions all involve memory access
+	assign slow_clk = (mem_instruction_count > 10); // Indicate to ramp down clock speed if the previous 10 instructions all involve memory access, send to top level
 	
 	/*
 	 *	Data Memory
