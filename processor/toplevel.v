@@ -56,10 +56,10 @@ module top (led);
 	/*
 	 *	Use the iCE40's hard primitive for the clock source.
 	 */
-	SB_HFOSC #(.CLKHF_DIV("0b00")) OSCInst0 (
+	SB_HFOSC #(.CLKHF_DIV("0b10")) OSCInst0 (
 		.CLKHFEN(ENCLKHF),
 		.CLKHFPU(CLKHF_POWERUP),
-		.CLKHF(clk)
+		.CLKHF(clk) // 12 MHz
 	);
 
 	/*
@@ -106,7 +106,7 @@ module top (led);
 			.clk_stall(data_clk_stall)
 		);
 
-	assign clk_sys = (slow_clk) ? clk_pll : clk; // Ramp down the clock when memory access levels are high!
+	assign clk_sys = (slow_clk) ? clk : clk_pll; // Ramp down the clock when memory access levels are high!
 
 	assign clk_proc = (data_clk_stall) ? 1'b1 : clk_sys;
 
