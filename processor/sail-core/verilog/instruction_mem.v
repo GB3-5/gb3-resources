@@ -78,6 +78,8 @@ module instruction_memory(addr, out);
 endmodule
 */
 
+
+
 module instruction_memory (
     input [7:0] addr,
     input we,
@@ -97,8 +99,7 @@ module instruction_memory (
     genvar i;
     generate
         for (i = 0; i < 10; i = i + 1) begin : BRAM_INST
-            bram_module #(   ///////////////////////// does bram_module need to be replaced by something
-                .DATA_WIDTH(16),  // Set the data width to 16 bits
+            SB_RAM256x16 #(   /////////////////////////////////////////// might be wrong
                 .ADDR_WIDTH(8)    // Set the address width to 8 bits
             ) bram_inst (
                 .WDATA(wdata),
@@ -117,8 +118,7 @@ module instruction_memory (
     endgenerate
 
     // Connect the BRAM outputs to the instruction memory output
-    //////////////////////// assign out = bram_data[addr]; DK IF THIS SHOULD BE HERE OR THE NEXT LINE BELOW
-	assign inst_mem_out = bram_data[addr];
+    assign out = bram_data[addr]; ///////////////////////////////////////might be wrong
 
     // Initialize the BRAM data
     initial begin

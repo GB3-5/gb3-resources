@@ -51,7 +51,9 @@ module cpu(
 			data_mem_WrData,
 			data_mem_memwrite,
 			data_mem_memread,
-			data_mem_sign_mask
+			data_mem_sign_mask,
+			raddr
+			//////
 		);
 	/*
 	 *	Input Clock
@@ -61,8 +63,27 @@ module cpu(
 	/*
 	 *	instruction memory input
 	 */
+
+	/*
 	output [31:0]		inst_mem_in;
 	input [31:0]		inst_mem_out;
+	*/
+
+	///
+	output [7:0] raddr; /////
+    output re; /////////
+    output rclk; //////
+    output rclke; /////////
+    input [15:0] rdata; ////////
+	output wclk;
+	output wclke;
+	output we;
+	output [7:0] waddr;
+	output [15:0] wdata;
+	output [15:0] mask;
+
+
+	//////
 
 	/*
 	 *	Data Memory
@@ -494,6 +515,7 @@ module cpu(
 		);
 
 	/////////////////////////////// ADDED THIS BIT, DK IF ITS RIGHT
+	/*
 	instruction_memory inst_mem (
     .addr(inst_addr[7:0]),    // Assuming inst_addr is the 8-bit address for instruction memory
     .we(1'b0),                // Set to 0 for read operation
@@ -507,6 +529,7 @@ module cpu(
     .rclke(clke),             // Pass the system clock enable
     .rdata(inst_mem_out)      // Connect the output to inst_mem_out
 		);
+	*/
 
 	wire[31:0] mem_regwb_mux_out; //TODO copy of wb_mux but in mem stage, move back and cleanup
 	//A copy of the writeback mux, but in MEM stage //TODO move back and cleanup
@@ -522,7 +545,10 @@ module cpu(
 	assign inst_mux_sel = pcsrc | predict | mistake_trigger | Fence_signal;
 
 	//Instruction Memory Connections
-	assign inst_mem_in = pc_out;
+	
+	//assign inst_mem_in = pc_out;
+	assign readaddr_1 = pc_out[31:16];
+	assign readaddr_2 = pc_out[15:0];
 
 	//Data Memory Connections
 	assign data_mem_addr = lui_result;
