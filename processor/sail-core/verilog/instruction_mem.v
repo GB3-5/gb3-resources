@@ -40,6 +40,7 @@
  *	RISC-V instruction memory
  */
 
+// THE FOLLOWING IS WHAT THE INSTRUCTION MEMORY WAS ORIGINALLY
 
 /*
 module instruction_memory(addr, out);
@@ -51,7 +52,7 @@ module instruction_memory(addr, out);
 	 *
 	 *	(Bad practice: The constant should be a `define).
 	 */
-	reg [31:0]		instruction_memory[0:2**12-1]; // it was 0:2**12-1, change it back
+	reg [31:0]		instruction_memory[0:2**12-1];           // it was 0:2**12-1, change it back
 
 	/*
 	 *	According to the "iCE40 SPRAM Usage Guide" (TN1314 Version 1.0), page 5:
@@ -67,6 +68,7 @@ module instruction_memory(addr, out);
 	 *	the design should instead use a reset signal going to
 	 *	modules in the design.
 	 */
+	 
 	initial begin
 		/*
 		 *	read from "program.hex" and store the instructions in instruction memory
@@ -74,10 +76,13 @@ module instruction_memory(addr, out);
 		$readmemh("verilog/program.hex",instruction_memory);
 	end
 
-	assign out = instruction_memory[addr >> 2];
+	assign out = instruction_memory[addr >> 2]; // assigns out to the instruction memory at the address. the >> 2 is to divide by 4, since each instruction is 4 bytes long
 endmodule
 */
 
+
+
+// THE FOLLOWING IS WHAT THE INSTRUCTION MEMORY WAS CHANGED TO
 
 
 module instruction_memory (

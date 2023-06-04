@@ -65,11 +65,11 @@ module cpu(
 	 */
 
 	/*
-	output [31:0]		inst_mem_in;
-	input [31:0]		inst_mem_out;
+	output [31:0]		inst_mem_in; // the address of the instruction to be fetched
+	input [31:0]		inst_mem_out; // the instruction to be executed
 	*/
 
-	///
+	///////////////// THIS WAS ADDED
 	output [7:0] raddr; /////
     output re; /////////
     output rclk; //////
@@ -81,8 +81,6 @@ module cpu(
 	output [7:0] waddr;
 	output [15:0] wdata;
 	output [15:0] mask;
-
-
 	//////
 
 	/*
@@ -544,11 +542,25 @@ module cpu(
 	assign decode_ctrl_mux_sel = pcsrc | mistake_trigger;
 	assign inst_mux_sel = pcsrc | predict | mistake_trigger | Fence_signal;
 
+
+
+
+
 	//Instruction Memory Connections
 	
-	//assign inst_mem_in = pc_out;
-	assign readaddr_1 = pc_out[31:16];
-	assign readaddr_2 = pc_out[15:0];
+	assign inst_mem_in = pc_out; // need to get rid of this line. inst_mem_in is the instruction memory's input
+	
+	//assign inst_mem_in1 = inst_mem_in[31:16]; // need to add this line
+	//assign inst_mem_in2 = inst_mem_in[15:0]; // need to add this line
+	//assign inst_mem_in = {inst_mem_in1, inst_mem_in2}; // need to add this line
+
+	//assign inst_mem_out1 = inst_mem_out[31:16]; // need to add this line
+	//assign inst_mem_out2 = inst_mem_out[15:0]; // need to add this line
+	//assign inst_mem_out = {inst_mem_out1, inst_mem_out2}; // need to add this line
+
+
+
+
 
 	//Data Memory Connections
 	assign data_mem_addr = lui_result;
