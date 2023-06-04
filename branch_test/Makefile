@@ -8,8 +8,8 @@ GB3_ROOT = /gb3-resources
 TARGET-ARCH	= riscv32-elf
 TARGET		= riscv
 
-PROGRAM		= matmul
-PROGRAM-SF	= matmul-sf
+PROGRAM		= branch_test
+PROGRAM-SF	= branch_test-sf
 INIT		= init
 INIT-SF		= init-sf
 
@@ -69,6 +69,8 @@ install: all
 	# New below
 	cp program.hex $(GB3_ROOT)/1modpro/programs/
 	cp data.hex $(GB3_ROOT)/1modpro/programs/
+	cp program.hex $(GB3_ROOT)/2modpro/programs/
+	cp data.hex $(GB3_ROOT)/2modpro/programs/
 
 clean:
 	$(RM) init.i *.o $(PROGRAM) $(PROGRAM).sr $(PROGRAM).map

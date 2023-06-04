@@ -39,21 +39,11 @@
 /*
  *	2 to 1 multiplexer
  */
-
 module mux2to1(input0, input1, select, out, clk);
 	input [31:0]	input0, input1;
 	input		select;
-	output reg [31:0]	out;
+	output [31:0]	out;
 	input clk;
 
-	// assign out = (select) ? input1 : input0;
-
-	always @(posedge clk) begin
-		if (select) begin
-			out <= input1;
-		end else begin
-			out <= input0;
-		end
-	end
-
+	assign out = (select) ? input1 : input0;
 endmodule

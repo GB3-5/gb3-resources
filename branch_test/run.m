@@ -1,5 +1,5 @@
 newnode		riscv
 sizemem		65536
-srecl		"matmul-sf.sr"
+srecl		"branch_test.sr"
 run
 on
