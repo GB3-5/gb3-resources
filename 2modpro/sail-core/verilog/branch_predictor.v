@@ -66,8 +66,6 @@
 // 	 */
 // 	output [31:0]	branch_addr;
 // 	output		prediction;
-
-	
 // 	/*
 // 	 *	internal state
 // 	 */
@@ -75,16 +73,6 @@
 
 // 	reg		branch_mem_sig_reg;
 
-// 	/*
-// 	 *	The `initial` statement below uses Yosys's support for nonzero
-// 	 *	initial values:
-// 	 *
-// 	 *		https://github.com/YosysHQ/yosys/commit/0793f1b196df536975a044a4ce53025c81d00c7f
-// 	 *
-// 	 *	Rather than using this simulation construct (`initial`),
-// 	 *	the design should instead use a reset signal going to
-// 	 *	modules in the design and to thereby set the values.
-// 	 */
 // 	initial begin
 // 		s = 2'b00;
 // 		branch_mem_sig_reg = 1'b0;
@@ -110,6 +98,75 @@
 // 	assign prediction = s[1] & branch_decode_sig;
 // endmodule
 
+/*
+ *		Branch Predictor FSM with Branch History Table for local branch prediction
+ */
+
+// module branch_predictor(
+// 		clk,
+// 		actual_branch_decision,
+// 		branch_decode_sig,
+// 		branch_mem_sig,
+// 		in_addr,
+// 		offset,
+// 		branch_addr,
+// 		prediction
+// 	);
+
+// 	/*
+// 	 *	inputs
+// 	 */
+// 	input		clk;
+// 	input		actual_branch_decision;
+// 	input		branch_decode_sig;
+// 	input		branch_mem_sig;
+// 	input [31:0]	in_addr;
+// 	input [31:0]	offset;
+
+// 	/*
+// 	 *	outputs
+// 	 */
+// 	output [31:0]	branch_addr;
+// 	output		prediction;
+
+// 	reg		branch_mem_sig_reg;
+
+// 	// branch history table, each entry is a 2-bit saturating counter
+// 	reg [1:0] bht [31:0];
+// 	wire [4:0] bht_index;
+	
+// 	initial begin
+// 		branch_mem_sig_reg = 1'b0;
+//   	end
+
+// 	assign bht_index = in_addr[4:0];
+	
+// 	always @(negedge clk) begin
+// 		branch_mem_sig_reg <= branch_mem_sig;
+// 	end
+
+// 	always @(posedge clk) begin
+// 		if (branch_mem_sig_reg) begin
+// 			// update 2-bit saturating counter inside each entry of bht based on actual branch decision
+// 			if (actual_branch_decision == 1) begin
+// 				if (bht[bht_index] < 3) begin
+// 					bht[bht_index] <= bht[bht_index] + 1;
+// 				end
+// 			end else begin
+// 				if (bht[bht_index] > 0) begin
+// 					bht[bht_index] <= bht[bht_index] - 1;
+// 				end
+// 			end
+// 		end
+// 	end
+
+// 	assign branch_addr = in_addr + offset;
+// 	assign prediction = bht[bht_index][1] & branch_decode_sig;
+// endmodule
+
+/*
+ *		Branch Predictor FSM with local & global branch prediction with tournament predictor
+ */
 
 module branch_predictor(
 		clk,
@@ -142,7 +199,13 @@ module branch_predictor(
 
 	// branch history table, each entry is a 2-bit saturating counter
 	reg [1:0] bht [31:0];
+
+	// global branch history table, each entry is a 2-bit saturating counter
+	reg [1:0] gbht [31:0];
+	reg [4:0] ghr;
+
 	wire [4:0] bht_index;
+	wire [4:0] gbht_index;
 	
 	initial begin
 		branch_mem_sig_reg = 1'b0;
@@ -155,20 +218,105 @@ module branch_predictor(
 	end
 
 	always @(posedge clk) begin
+		gbh_index <= in_addr[4:0] ^ ghr;
 		if (branch_mem_sig_reg) begin
-			// update 2-bit saturating counter inside each entry of bht based on actual branch decision
+			// update 2-bit saturating counter inside each entry of bht or gbht based on actual branch decision
 			if (actual_branch_decision == 1) begin
 				if (bht[bht_index] < 3) begin
 					bht[bht_index] <= bht[bht_index] + 1;
 				end
-			end else begin
+
+				if (gbht[gbht_index] < 3) begin
+					gbht[gbht_index] <= gbht[gbht_index] + 1;
+				end
+			end 
+			
+			else begin
 				if (bht[bht_index] > 0) begin
 					bht[bht_index] <= bht[bht_index] - 1;
 				end
+
+				if (gbht[gbht_index] > 0) begin
+					gbht[gbht_index] <= gbht[gbht_index] - 1;
+				end
 			end
 		end
+		ghr <= {ghr[3:0], actual_branch_decision};
 	end
 
 	assign branch_addr = in_addr + offset;
-	assign prediction = bht[bht_index][1] & branch_decode_sig;
+	// assign prediction = bht[bht_index][1] & branch_decode_sig;
 endmodule
+
+// /*
+//  *		Branch Predictor FSM with global branch prediction
+//  */
+//  */
+
+// module branch_predictor(
+// 		clk,
+// 		actual_branch_decision,
+// 		branch_decode_sig,
+// 		branch_mem_sig,
+// 		in_addr,
+// 		offset,
+// 		branch_addr,
+// 		prediction
+// 	);
+
+// 	/*
+// 	 *	inputs
+// 	 */
+// 	input		clk;
+// 	input		actual_branch_decision;
+// 	input		branch_decode_sig;
+// 	input		branch_mem_sig;
+// 	input [31:0]	in_addr;
+// 	input [31:0]	offset;
+
+// 	/*
+// 	 *	outputs
+// 	 */
+// 	output [31:0]	branch_addr;
+// 	output		prediction;
+
+// 	reg		branch_mem_sig_reg;
+
+// 	// global branch history table, each entry is a 2-bit saturating counter
+// 	reg [1:0] gbht [31:0];
+// 	reg [4:0] ghr;
+// 	wire [4:0] gbht_index;
+	
+// 	initial begin
+// 		branch_mem_sig_reg = 1'b0;
+//   	end
+	
+// 	always @(negedge clk) begin
+// 		branch_mem_sig_reg <= branch_mem_sig;
+// 	end
+
+//  (TO-DO) Test without the XOR, does it make a difference??
+
+// 	assign gbht_index = in_addr[4:0] ^ ghr;
+
+// 	always @(posedge clk) begin
+// 		if (branch_mem_sig_reg) begin
+// 			// update 2-bit saturating counter inside each entry of bht or gbht based on actual branch decision
+// 			if (actual_branch_decision == 1) begin
+// 				if (gbht[gbht_index] < 3) begin
+// 					gbht[gbht_index] <= gbht[gbht_index] + 1;
+// 				end
+// 			end 
+			
+// 			else begin
+// 				if (gbht[gbht_index] > 0) begin
+// 					gbht[gbht_index] <= gbht[gbht_index] - 1;
+// 				end
+// 			end
+// 		end
+// 		ghr <= {ghr[3:0], actual_branch_decision};
+// 	end
+
+// 	assign branch_addr = in_addr + offset;
+// 	assign prediction = gbht[gbht_index][1] & branch_decode_sig;
+// endmodule
