@@ -193,7 +193,9 @@ module branch_predictor(
 	 *	outputs
 	 */
 	output [31:0]	branch_addr;
-	output		prediction;
+	output			prediction;
+	wire 			local_prediction;
+	wire 			global_prediction;
 
 	reg		branch_mem_sig_reg;
 
@@ -202,6 +204,11 @@ module branch_predictor(
 
 	// global branch history table, each entry is a 2-bit saturating counter
 	reg [1:0] gbht [31:0];
+
+	// tournament history table, each entry is a 2-bit saturating counter
+	reg [1:0] tournament_ht [31:0];
+
+	// global history register, only 5 bits as gbht would be too large otherwise 
 	reg [4:0] ghr;
 
 	wire [4:0] bht_index;
@@ -212,13 +219,13 @@ module branch_predictor(
   	end
 
 	assign bht_index = in_addr[4:0];
+	assign gbht_index = in_addr[4:0] ^ ghr;
 	
 	always @(negedge clk) begin
 		branch_mem_sig_reg <= branch_mem_sig;
 	end
 
 	always @(posedge clk) begin
-		gbh_index <= in_addr[4:0] ^ ghr;
 		if (branch_mem_sig_reg) begin
 			// update 2-bit saturating counter inside each entry of bht or gbht based on actual branch decision
 			if (actual_branch_decision == 1) begin
@@ -245,7 +252,42 @@ module branch_predictor(
 	end
 
 	assign branch_addr = in_addr + offset;
-	// assign prediction = bht[bht_index][1] & branch_decode_sig;
+	assign local_prediction = bht[bht_index][1];
+	assign global_prediction = gbht[gbht_index][1];
+
+	// tournament predictor
+	always @(posedge clk) begin
+		if (branch_mem_sig_reg) begin
+			if (actual_branch_decision == 1) begin
+				// 10 & 11 corresponds to local prediction being taken, 00 & 01 corresponds to global prediction being taken
+				// Can use bht_index as index for tournament_ht as well
+				if (local_prediction == 1 && global_prediction == 0) begin
+					if (tournament_ht[bht_index] < 3) begin
+						tournament_ht[bht_index] <= tournament_ht[bht_index] + 1;
+					end
+				end else if (local_prediction == 0 && global_prediction == 1) begin
+					if (tournament_ht[bht_index] > 0) begin
+						tournament_ht[bht_index] <= tournament_ht[bht_index] - 1;
+					end 
+				end
+			end
+
+			else if (actual_branch_decision == 0) begin
+				if (local_prediction == 1 && global_prediction == 0) begin
+					if (tournament_ht[bht_index] > 0) begin
+						tournament_ht[bht_index] <= tournament_ht[bht_index] - 1;
+					end
+				end else if (local_prediction == 0 && global_prediction == 1) begin
+					if (tournament_ht[bht_index] < 3) begin
+						tournament_ht[bht_index] <= tournament_ht[bht_index] + 1;
+					end 
+				end
+			end
+		end
+	end
+	
+	assign prediction = tournament_ht[bht_index][1] & branch_decode_sig;
+
 endmodule
 
 // /*
@@ -295,7 +337,7 @@ endmodule
 // 		branch_mem_sig_reg <= branch_mem_sig;
 // 	end
 
-//  (TO-DO) Test without the XOR, does it make a difference??
+//  //(TO-DO) Test without the XOR, does it make a difference??
 
 // 	assign gbht_index = in_addr[4:0] ^ ghr;
 
