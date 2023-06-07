@@ -179,38 +179,28 @@ module branch_predictor(
 		prediction
 	);
 
-	/*
-	 *	inputs
-	 */
+	// inputs
 	input		clk;
 	input		actual_branch_decision;
 	input		branch_decode_sig;
 	input		branch_mem_sig;
 	input [31:0]	in_addr;
 	input [31:0]	offset;
-
-	/*
-	 *	outputs
-	 */
+	// outputs
 	output [31:0]	branch_addr;
 	output			prediction;
 	wire 			local_prediction;
 	wire 			global_prediction;
 
 	reg		branch_mem_sig_reg;
-
 	// branch history table, each entry is a 2-bit saturating counter
 	reg [1:0] bht [31:0];
-
 	// global branch history table, each entry is a 2-bit saturating counter
 	reg [1:0] gbht [31:0];
-
 	// tournament history table, each entry is a 2-bit saturating counter
 	reg [1:0] tournament_ht [31:0];
-
 	// global history register, only 5 bits as gbht would be too large otherwise 
 	reg [4:0] ghr;
-
 	wire [4:0] bht_index;
 	wire [4:0] gbht_index;
 	
@@ -220,6 +210,9 @@ module branch_predictor(
 
 	assign bht_index = in_addr[4:0];
 	assign gbht_index = in_addr[4:0] ^ ghr;
+	assign branch_addr = in_addr + offset;
+	assign local_prediction = bht[bht_index][1];
+	assign global_prediction = gbht[gbht_index][1];
 	
 	always @(negedge clk) begin
 		branch_mem_sig_reg <= branch_mem_sig;
@@ -227,7 +220,8 @@ module branch_predictor(
 
 	always @(posedge clk) begin
 		if (branch_mem_sig_reg) begin
-			// update 2-bit saturating counter inside each entry of bht or gbht based on actual branch decision
+			// update 2-bit saturating counter inside 
+			// each entry of bht or gbht based on actual branch decision
 			if (actual_branch_decision == 1) begin
 				if (bht[bht_index] < 3) begin
 					bht[bht_index] <= bht[bht_index] + 1;
@@ -251,15 +245,12 @@ module branch_predictor(
 		ghr <= {ghr[3:0], actual_branch_decision};
 	end
 
-	assign branch_addr = in_addr + offset;
-	assign local_prediction = bht[bht_index][1];
-	assign global_prediction = gbht[gbht_index][1];
-
 	// tournament predictor
 	always @(posedge clk) begin
 		if (branch_mem_sig_reg) begin
 			if (actual_branch_decision == 1) begin
-				// 10 & 11 corresponds to local prediction being taken, 00 & 01 corresponds to global prediction being taken
+				// 10 & 11 corresponds to local prediction being taken
+				// 00 & 01 corresponds to global prediction being taken
 				// Can use bht_index as index for tournament_ht as well
 				if (local_prediction == 1 && global_prediction == 0) begin
 					if (tournament_ht[bht_index] < 3) begin
@@ -285,9 +276,7 @@ module branch_predictor(
 			end
 		end
 	end
-	
 	assign prediction = tournament_ht[bht_index][1] & branch_decode_sig;
-
 endmodule
 
 // /*
