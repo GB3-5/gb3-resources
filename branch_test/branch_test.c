@@ -1,10 +1,10 @@
 
-#define TAKEN 1
-#define NOT_TAKEN 0
-#define STRONGLY_TAKEN 3
-#define WEAKLY_TAKEN 2
-#define STRONGLY_NOT_TAKEN 0
-#define WEAKLY_NOT_TAKEN 1
+// #define TAKEN 1
+// #define NOT_TAKEN 0
+// #define STRONGLY_TAKEN 3
+// #define WEAKLY_TAKEN 2
+// #define STRONGLY_NOT_TAKEN 0
+// #define WEAKLY_NOT_TAKEN 1
 
 int testFunction(int a, int b) {
     int result = 0;
@@ -21,26 +21,26 @@ void testLocalBranchPredictor() {
     int a = 5;
     int b = 10;
     int result = 0;
-    int counter[2] = {WEAKLY_TAKEN, WEAKLY_NOT_TAKEN};
+    int counter[2] = {2, 1};
 
     for (i = 0; i < 100000; i++) {
-        if (counter[i % 2] >= STRONGLY_TAKEN) {
+        if (counter[i % 2] >= 3) {
             result += testFunction(a, b);
             counter[i % 2]--;
-        } else if (counter[i % 2] <= STRONGLY_NOT_TAKEN) {
+        } else if (counter[i % 2] <= 0) {
             result += testFunction(b, a);
             counter[i % 2]++;
-        } else if (counter[i % 2] == WEAKLY_TAKEN) {
+        } else if (counter[i % 2] == 2) {
             result += testFunction(a, b);
             counter[i % 2]--;
-        } else if (counter[i % 2] == WEAKLY_NOT_TAKEN) {
+        } else if (counter[i % 2] == 1) {
             result += testFunction(b, a);
             counter[i % 2]++;
         }
     }
 }
 
-void test_pattern () { 
+void testGlobalBranchPredictor () { 
     int sum1 = 0;
     int sum2 = 0;
     int sum3 = 0;
@@ -60,11 +60,11 @@ void test_pattern () {
 }
 
 int main() {
-    volatile unsigned int *gDebugLedsMemoryMappedRegister = (unsigned int *)0x2000;
-    *gDebugLedsMemoryMappedRegister = 0xFF;
-    test_pattern();
+    // volatile unsigned int *gDebugLedsMemoryMappedRegister = (unsigned int *)0x2000;
+    // *gDebugLedsMemoryMappedRegister = 0xFF;
+    testGlobalBranchPredictor();
     testLocalBranchPredictor();
-    *gDebugLedsMemoryMappedRegister = ~(*gDebugLedsMemoryMappedRegister);
+    // *gDebugLedsMemoryMappedRegister = ~(*gDebugLedsMemoryMappedRegister);
     for (int j = 0; j < 1000000; j++) {
     //Null statement to waste time
     ;
